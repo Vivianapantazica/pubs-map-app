@@ -24,7 +24,7 @@ public class Client implements Identifiable<Long> {
 	@Column(name = "client_id")
 	private Long clientId;
 
-	@Column(name = "email", nullable = false)
+	@Column(name = "email", nullable = false, unique = true)
 	private String email;
 
 	@Column(name = "password", nullable = false)

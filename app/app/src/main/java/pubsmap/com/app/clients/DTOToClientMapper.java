@@ -11,7 +11,7 @@ public class DTOToClientMapper implements Function<ClientDTO, Client> {
 	public Client apply(ClientDTO clientDTO) {
 		return Client.builder()
 				.email(clientDTO.email())
-				.password(clientDTO.email())
+				.password(clientDTO.password())
 				.isAdmin(clientDTO.isAdmin())
 				.deleted(false)
 				.build();

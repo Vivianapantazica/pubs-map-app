@@ -2,7 +2,9 @@ package pubsmap.com.app.clients;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +35,10 @@ public class ClientServiceImpl implements ClientService {
 
 	@Override
 	public Optional<ClientDTO> addClient(ClientDTO clientDTO) {
+		if (clientRepository.getClientByEmail(clientDTO.email()).isPresent()) {
+			throw new ResponseStatusException(
+					HttpStatus.CONFLICT , "Resource Already Found");
+		}
 		Client client = dtoToClientMapper.apply(clientDTO);
 		clientRepository.save(client);
 		return Optional.of(clientDTO);
