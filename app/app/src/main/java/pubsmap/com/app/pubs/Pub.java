@@ -15,7 +15,6 @@ import pubsmap.com.app.shared.Identifiable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE pub SET deleted = true WHERE pub_id = ?")
 @Where(clause = "deleted = false")
 public class Pub implements Identifiable<Long> {
 

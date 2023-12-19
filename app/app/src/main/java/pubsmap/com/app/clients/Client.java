@@ -15,7 +15,6 @@ import pubsmap.com.app.shared.Identifiable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE client SET deleted = true WHERE client_id = ?")
 @Where(clause = "deleted = false")
 public class Client implements Identifiable<Long> {
 
