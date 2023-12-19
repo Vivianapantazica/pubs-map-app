@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import pubsmap.com.app.pubs.PubDTO;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,11 @@ public class ClientController {
 						HttpStatus.NOT_FOUND, "Resource Not Found"));
 	}
 
+	@GetMapping("/{clientId}/pubs")
+	public ResponseEntity<List<PubDTO>> getPubsByClientId(@PathVariable("clientId") Long clientId) {
+		return ResponseEntity.ok(clientService.getPubsById(clientId));
+	}
+
 	@DeleteMapping("/{clientId}")
 	public ResponseEntity<Void> deleteClientById(@PathVariable("clientId") Long clientId) {
 		clientService.getClientById(clientId)
@@ -39,12 +45,26 @@ public class ClientController {
 		return ResponseEntity.noContent().build();
 	}
 
+	@DeleteMapping("/{clientId}/pubs/{pubId}")
+	public ResponseEntity<Void> deletePubById(@PathVariable("clientId") Long clientId, @PathVariable("pubId") Long pubId) {
+		clientService.deletePubById(clientId, pubId);
+		return ResponseEntity.noContent().build();
+	}
+
 	@PostMapping
 	public ResponseEntity<ClientDTO> addClient(@RequestBody @Valid ClientDTO clientDTO) {
 		ClientDTO newClientDTO = clientService.addClient(clientDTO).orElseThrow(
 				() -> new ResponseStatusException(
 						HttpStatus.CONFLICT , "Resource Already Found"));
 		return new ResponseEntity<>(newClientDTO, HttpStatus.CREATED);
+	}
+
+	@PostMapping("/{clientId}/pubs/{pubId}")
+	public ResponseEntity<PubDTO> addPubToClient(@PathVariable("clientId") Long clientId, @PathVariable("pubId") Long pubId) {
+		PubDTO pubAddedToClientDTO = clientService.addPubToClient(clientId, pubId).orElseThrow(
+				() -> new ResponseStatusException(
+						HttpStatus.CONFLICT , "Resource Already Found"));
+		return new ResponseEntity<>(pubAddedToClientDTO, HttpStatus.CREATED);
 	}
 
 	@PutMapping
