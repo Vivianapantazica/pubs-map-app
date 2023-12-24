@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("v1/pubs")
+@RequestMapping("/api/v1/pubs")
 @RequiredArgsConstructor
 public class PubController {
 
@@ -30,7 +30,7 @@ public class PubController {
                         HttpStatus.NOT_FOUND, "Resource Not Found"));
     }
 
-    @DeleteMapping("/{pubId}")
+    @DeleteMapping("/admin/{pubId}")
     public ResponseEntity<Void> deletePubById(@PathVariable("pubId") Long pubId) {
         pubService.getPubById(pubId)
                 .map(ResponseEntity::ok)
@@ -40,7 +40,7 @@ public class PubController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping
+    @PostMapping("/admin")
     public ResponseEntity<PubDTO> addPub(@RequestBody @Valid PubDTO pubDTO) {
         PubDTO newPubDTO = pubService.addPub(pubDTO).orElseThrow(
                 () -> new ResponseStatusException(
@@ -48,7 +48,7 @@ public class PubController {
         return new ResponseEntity<>(newPubDTO, HttpStatus.CREATED);
     }
 
-    @PutMapping
+    @PutMapping("/admin")
     public ResponseEntity<PubDTO> updatePub(@RequestBody @Valid PubDTO pubDTO) {
         return Optional.ofNullable(pubDTO).flatMap(dto -> pubService.updatePub(pubDTO))
                 .map(ResponseEntity::ok)

@@ -9,8 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface ClientRepository extends PersistableRepository<Client, Long> {
-	@Query( """ 
-   			SELECT client FROM Client client WHERE client.email = :email
-   			""")
-	Optional<Client> getClientByEmail(@Param("email") String email);
+	Optional<Client> findByEmail(String email);
 }

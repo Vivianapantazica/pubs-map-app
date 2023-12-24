@@ -38,6 +38,11 @@ public class ClientServiceImpl implements ClientService {
 	}
 
 	@Override
+	public Optional<Client> findClientByEmail(String email) {
+		return clientRepository.findByEmail(email);
+	}
+
+	@Override
 	public List<PubDTO> getPubsById(Long clientId) {
 		List<Pub> pubs = pubRepository.findPubsById(clientId);
 		return pubs.stream().map(pubToDTOMapper).collect(Collectors.toList());
@@ -56,7 +61,7 @@ public class ClientServiceImpl implements ClientService {
 
 	@Override
 	public Optional<ClientDTO> addClient(ClientDTO clientDTO) {
-		if (clientRepository.getClientByEmail(clientDTO.email()).isPresent()) {
+		if (clientRepository.findByEmail(clientDTO.email()).isPresent()) {
 			throw new ResponseStatusException(
 					HttpStatus.CONFLICT , "Resource Already Found");
 		}
@@ -87,6 +92,8 @@ public class ClientServiceImpl implements ClientService {
 		client.setEmail(clientDTO.email());
 		client.setPassword(clientDTO.password());
 		client.setIsAdmin(clientDTO.isAdmin());
+		Role role = clientDTO.isAdmin() ? Role.ADMIN : Role.USER;
+		client.setRole(role);
 		clientRepository.save(client);
 		return Optional.of(clientDTO);
 	}
