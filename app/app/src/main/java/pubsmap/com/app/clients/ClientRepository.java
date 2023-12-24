@@ -1,7 +1,5 @@
 package pubsmap.com.app.clients;
 
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import pubsmap.com.app.shared.PersistableRepository;
 
