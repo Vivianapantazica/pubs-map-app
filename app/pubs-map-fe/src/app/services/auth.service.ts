@@ -19,7 +19,7 @@ export class AuthService {
   }
 
   login(authRequest: AuthRequest): Observable<any> {
-    const url = `${this.baseUrl}/login`; // Replace 'endpoint' with your API endpoint
+    const url = `${this.baseUrl}/authenticate`; // Replace 'endpoint' with your API endpoint
     return this.http.post<any>(url, authRequest);
   }
 

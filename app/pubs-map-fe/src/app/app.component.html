@@ -1,9 +1,15 @@
 <ng-container *ngIf="register && !login">
-  <app-register (registerEvent)="handleRegisterEvent($event)"></app-register>
+  <app-register
+    (registerEvent)="handleRegisterEvent($event)"
+    (switchToLoginEvent)="handleSwitchToLoginEvent()"
+  ></app-register>
 </ng-container>
 
 <ng-container *ngIf="login && !register">
-  <app-login (loginEvent)="handleLoginEvent($event)"></app-login>
+  <app-login
+    (loginEvent)="handleLoginEvent($event)"
+    (switchToRegisterEvent)="handleSwitchToRegisterEvent()"
+  ></app-login>
 </ng-container>
 
 <ng-container *ngIf="!login && !register">

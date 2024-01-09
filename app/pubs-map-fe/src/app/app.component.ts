@@ -21,8 +21,8 @@ export class AppComponent {
     }
   }
 
-  login = false;
-  register = true;
+  login = true;
+  register = false;
 
   handleRegisterEvent(authRequest: AuthRequest) {
     this.authService.register(authRequest).subscribe(
@@ -36,6 +36,16 @@ export class AppComponent {
     );
   }
 
+  handleSwitchToLoginEvent() {
+    this.login = true;
+    this.register = false;
+  }
+
+  handleSwitchToRegisterEvent() {
+    this.register = true;
+    this.login = false;
+  }
+
   handleLogoutEvent() {
     this.authService.logout();
     this.login = true;
@@ -45,7 +55,7 @@ export class AppComponent {
   handleLoginEvent(authRequest: AuthRequest) {
     this.authService.login(authRequest).subscribe(
       (response) => {
-        this.localStorageService.setItem('token', response.body['token']);
+        this.localStorageService.setItem('token', response['token']);
         this.login = false;
         this.register = false;
       }, (error) => {

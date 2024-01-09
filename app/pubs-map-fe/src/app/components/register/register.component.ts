@@ -9,6 +9,7 @@ import { AuthRequest } from 'src/app/models/AuthRequest';
 export class RegisterComponent implements OnInit {
 
   @Output() registerEvent = new EventEmitter<AuthRequest>();
+  @Output() switchToLoginEvent = new EventEmitter<void>();
 
   constructor() { }
 
@@ -19,6 +20,10 @@ export class RegisterComponent implements OnInit {
     const username = (<HTMLInputElement> document.getElementById("username")).value;
     const password = (<HTMLInputElement> document.getElementById("password")).value;
     this.registerEvent.emit(new AuthRequest(username, password));
+  }
+
+  switchToLogin() {
+    this.switchToLoginEvent.emit();
   }
 
 }
