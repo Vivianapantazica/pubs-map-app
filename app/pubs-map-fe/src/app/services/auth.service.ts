@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthRequest } from '../models/AuthRequest';
 import { LocalStorageService } from './local-storage.service';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -12,22 +13,14 @@ export class AuthService {
 
   constructor(private http: HttpClient, private localStorageService: LocalStorageService) { }
 
-  register(authRequest: AuthRequest): void {
+  register(authRequest: AuthRequest): Observable<any> {
     const url = `${this.baseUrl}/register`; // Replace 'endpoint' with your API endpoint
-    this.http.post<any>(url, authRequest).subscribe(
-      (response) => {
-        this.localStorageService.setItem('token', response['token']);
-      }
-    );
+    return this.http.post<any>(url, authRequest);
   }
 
-  login(authRequest: AuthRequest): void {
+  login(authRequest: AuthRequest): Observable<any> {
     const url = `${this.baseUrl}/login`; // Replace 'endpoint' with your API endpoint
-    this.http.post<any>(url, authRequest).subscribe(
-      (response) => {
-        this.localStorageService.setItem('token', response.body['token']);
-      }
-    );
+    return this.http.post<any>(url, authRequest);
   }
 
   logout(): void {

@@ -25,16 +25,32 @@ export class AppComponent {
   register = true;
 
   handleRegisterEvent(authRequest: AuthRequest) {
-    this.authService.register(authRequest);
-    this.login = false;
-    this.register = false;
-    console.log("dupa register", this.login, this.register);
+    this.authService.register(authRequest).subscribe(
+      (response) => {
+        this.localStorageService.setItem('token', response['token']);
+        this.login = false;
+        this.register = false;
+      }, (error) => {
+        console.log(error);
+      }
+    );
   }
 
   handleLogoutEvent() {
     this.authService.logout();
     this.login = true;
     this.register = false;
-    console.log("dupa logout", this.login, this.register);
+  }
+
+  handleLoginEvent(authRequest: AuthRequest) {
+    this.authService.login(authRequest).subscribe(
+      (response) => {
+        this.localStorageService.setItem('token', response.body['token']);
+        this.login = false;
+        this.register = false;
+      }, (error) => {
+        console.log(error);
+      }
+    );
   }
 }

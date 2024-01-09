@@ -3,7 +3,7 @@
 </ng-container>
 
 <ng-container *ngIf="login && !register">
-  <app-login></app-login>
+  <app-login (loginEvent)="handleLoginEvent($event)"></app-login>
 </ng-container>
 
 <ng-container *ngIf="!login && !register">
