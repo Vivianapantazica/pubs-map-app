@@ -59,10 +59,10 @@ export class ContentComponent implements OnInit, OnDestroy {
 
   // Attributes
   zoom = 10;
-  center: Array<number> = [-118.73682450024377, 34.07817583063242];
+  center: Array<number> = [26.1068, 44.4325];
   basemap = "streets-vector";
   loaded = false;
-  pointCoords: number[] = [-118.73682450024377, 34.07817583063242];
+  pointCoords: number[] = [26.1068, 44.4325];
   dir: number = 0;
   count: number = 0;
   timeoutHandler = null;
@@ -113,11 +113,11 @@ export class ContentComponent implements OnInit, OnDestroy {
 
         const params = {
           address: {
-            address: "Lola's Cuisine"
+            address: "El Comandante", 
           },
-          location: pt,  // San Francisco (-122.4194, 37.7749)
+          location: pt,  
           outFields: ["PlaceName","Place_addr"]
-        }
+        };
 
         Locator.addressToLocations(geocodingServiceUrl, params).then((results)=> {
           showResults(results);
