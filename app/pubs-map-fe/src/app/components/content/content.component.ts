@@ -70,7 +70,6 @@ export class ContentComponent implements OnInit, OnDestroy {
   constructor() { }
 
   async initializeMap() {
-    console.log("cacat");
     try {
 
       // Configure the Map
@@ -82,7 +81,7 @@ export class ContentComponent implements OnInit, OnDestroy {
 
       this.map = new WebMap(mapProperties);
 
-      // this.addFeatureLayers();
+      this.addFeatureLayers();
       this.addPoint(this.pointCoords[1], this.pointCoords[0]);
 
       // Initialize the MapView

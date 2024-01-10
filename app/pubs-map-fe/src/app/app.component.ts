@@ -21,7 +21,7 @@ export class AppComponent {
     }
   }
 
-  login = true;
+  login = false;
   register = false;
 
   handleRegisterEvent(authRequest: AuthRequest) {
