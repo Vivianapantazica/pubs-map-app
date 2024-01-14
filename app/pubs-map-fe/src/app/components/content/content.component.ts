@@ -31,6 +31,9 @@ import Locate from '@arcgis/core/widgets/Locate';
 import FeatureSet from '@arcgis/core/rest/support/FeatureSet';
 import RouteParameters from '@arcgis/core/rest/support/RouteParameters';
 import * as route from "@arcgis/core/rest/route.js";
+import Search from "@arcgis/core/widgets/Search.js";
+import pubNames from './pubNames'
+
 @Component({
   selector: 'app-content',
   templateUrl: './content.component.html',
@@ -108,20 +111,31 @@ export class ContentComponent implements OnInit, OnDestroy {
       this.view.ui.add(this.locate, "top-left");
 
       let obj = this;
-      function findPlaces(pt) {
+      async function findPlaces(addresses: string[], pt) {
         const geocodingServiceUrl = "http://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer";
 
-        const params = {
-          address: {
-            address: "El Comandante", 
-          },
-          location: pt,  
-          outFields: ["PlaceName","Place_addr"]
-        };
+        const geocodePromises = addresses.map((address) => {
+          const params = {
+            address: {
+              address: address, 
+            },
+            location: pt,  
+            outFields: ["PlaceName","Place_addr"]
+          };
 
-        Locator.addressToLocations(geocodingServiceUrl, params).then((results)=> {
-          showResults(results);
+        return Locator.addressToLocations(geocodingServiceUrl, params);
         });
+
+        try {
+          const resultsArray = await Promise.all(geocodePromises);
+      
+          // Flatten the array of results
+          const results = resultsArray.reduce((acc, cur) => acc.concat(cur), []);
+      
+          showResults(results);
+        } catch (error) {
+          console.error("Error in geocoding:", error);
+        }
 
       }
 
@@ -158,13 +172,23 @@ export class ContentComponent implements OnInit, OnDestroy {
             });
           }
       }
-      findPlaces(this.center);
+      findPlaces(pubNames, this.center);
+
 
       // Fires pointer-move event when user clicks on "Shift"
       // key and moves the pointer on the view.
       this.view.on('pointer-move', ["Shift"], (event) => {
         let point = this.view.toMap({ x: event.x, y: event.y });
         console.log("map moved: ", point.longitude, point.latitude);
+      });
+
+      const searchWidget = new Search({
+        view: this.view
+      });
+      
+      this.view.ui.add(searchWidget, {
+        position: "top-left",
+        index: 0
       });
 
       await this.view.when(); // wait for map to load
@@ -175,6 +199,7 @@ export class ContentComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.log("EsriLoader: ", error);
     }
+
   }
 
 
