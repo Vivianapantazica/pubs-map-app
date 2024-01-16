@@ -9,17 +9,17 @@ import { Observable } from 'rxjs';
 })
 export class AuthService {
 
-  baseUrl = 'http://localhost:8090/api/v1/auth';
+  baseUrl = 'http://localhost:8080/api/v1/auth';
 
   constructor(private http: HttpClient, private localStorageService: LocalStorageService) { }
 
   register(authRequest: AuthRequest): Observable<any> {
-    const url = `${this.baseUrl}/register`; // Replace 'endpoint' with your API endpoint
+    const url = `${this.baseUrl}/register`;
     return this.http.post<any>(url, authRequest);
   }
 
   login(authRequest: AuthRequest): Observable<any> {
-    const url = `${this.baseUrl}/authenticate`; // Replace 'endpoint' with your API endpoint
+    const url = `${this.baseUrl}/authenticate`;
     return this.http.post<any>(url, authRequest);
   }
 

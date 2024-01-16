@@ -1,10 +1,15 @@
-<h3>login</h3>
+<div class="welcome-title">
+  <h1>Bine ai venit!</h1>
+  <div class="login-container">
+    <h3>Login</h3>
 
-<label for="username">username</label>
-<input name="username" id="username">
+    <label for="username">Username:</label>
+    <input class="form-input" type="text" name="username" id="username">
 
-<label for="password">password</label>
-<input type="password" name="password" id="password">
+    <label for="password">Password:</label>
+    <input class="form-input" type="password" name="password" id="password">
 
-<button (click)="emitLoginEvent()">login</button>
-<button (click)="switchToRegister()">switch to register</button>
+    <button class="login-button" (click)="emitLoginEvent()">Login</button>
+    <button class="register-button" (click)="switchToRegister()">Switch to Register</button>
+  </div>
+</div>

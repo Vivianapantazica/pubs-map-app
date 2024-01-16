@@ -9,14 +9,12 @@ import {
   OnDestroy
 } from "@angular/core";
 
-import esri = __esri; // Esri TypeScript Types
+import esri = __esri;
 
 
 import Config from '@arcgis/core/config';
 import WebMap from '@arcgis/core/WebMap';
 import MapView from '@arcgis/core/views/MapView';
-import Bookmarks from '@arcgis/core/widgets/Bookmarks';
-import Expand from '@arcgis/core/widgets/Expand';
 import * as Locator from '@arcgis/core/rest/locator';
 import SimpleMarkerSymbol from '@arcgis/core/symbols/SimpleMarkerSymbol';
 
@@ -33,6 +31,8 @@ import RouteParameters from '@arcgis/core/rest/support/RouteParameters';
 import * as route from "@arcgis/core/rest/route.js";
 import Search from "@arcgis/core/widgets/Search.js";
 import pubNames from './pubNames'
+import {Pub} from "../../models/Pub";
+import {PubsService} from "../../services/pubs.service";
 
 @Component({
   selector: 'app-content',
@@ -40,6 +40,7 @@ import pubNames from './pubNames'
   styleUrls: ['./content.component.css']
 })
 export class ContentComponent implements OnInit, OnDestroy {
+  private pubsList: Pub[] = [];
 
   @Output() logoutEvent = new EventEmitter<void>();
 
@@ -49,10 +50,8 @@ export class ContentComponent implements OnInit, OnDestroy {
 
   @Output() mapLoadedEvent = new EventEmitter<boolean>();
 
-  // The <div> where we will place the map
   @ViewChild("mapViewNode", { static: true }) private mapViewEl: ElementRef;
 
-  // Instances
   map: esri.Map;
   view: esri.MapView;
   pointGraphic: esri.Graphic;
@@ -70,12 +69,11 @@ export class ContentComponent implements OnInit, OnDestroy {
   count: number = 0;
   timeoutHandler = null;
 
-  constructor() { }
+  constructor(private pubsService: PubsService) { }
 
   async initializeMap() {
     try {
 
-      // Configure the Map
       const mapProperties: esri.WebMapProperties = {
         basemap: this.basemap
       };
@@ -87,7 +85,6 @@ export class ContentComponent implements OnInit, OnDestroy {
       this.addFeatureLayers();
       this.addPoint(this.pointCoords[1], this.pointCoords[0]);
 
-      // Initialize the MapView
       const mapViewProperties = {
         container: this.mapViewEl.nativeElement,
         center: this.center,
@@ -117,9 +114,9 @@ export class ContentComponent implements OnInit, OnDestroy {
         const geocodePromises = addresses.map((address) => {
           const params = {
             address: {
-              address: address, 
+              address: address,
             },
-            location: pt,  
+            location: pt,
             outFields: ["PlaceName","Place_addr"]
           };
 
@@ -128,10 +125,9 @@ export class ContentComponent implements OnInit, OnDestroy {
 
         try {
           const resultsArray = await Promise.all(geocodePromises);
-      
-          // Flatten the array of results
+
           const results = resultsArray.reduce((acc, cur) => acc.concat(cur), []);
-      
+
           showResults(results);
         } catch (error) {
           console.error("Error in geocoding:", error);
@@ -141,42 +137,46 @@ export class ContentComponent implements OnInit, OnDestroy {
 
       function showResults(results) {
         obj.view.popup.close();
-          obj.view.graphics.removeAll();
+        obj.view.graphics.removeAll();
 
-          const markerSymbol = new SimpleMarkerSymbol({
-            color: "yellow",
-            size: "16px",
-            outline: {
-              color: "blue",
-              width: "4px",
-            },
-          });
+        const markerSymbol = new SimpleMarkerSymbol({
+          color: "yellow",
+          size: "16px",
+          outline: {
+            color: "blue",
+            width: "4px",
+          },
+        });
 
-          results.forEach((result)=>{
-            obj.view.graphics.add(
-              new Graphic({
-                attributes: result.attributes,
-                geometry: result.location,
-                symbol: markerSymbol,
-                popupTemplate: {
-                  title: "{PlaceName}",
-                  content: "{Place_addr}" + "<br><br>" + result.location.x.toFixed(5) + "," + result.location.y.toFixed(5)
-                }
-             }));
+        results.forEach((result) => {
+          const pub = obj.pubsList.find((pub) => pub.name === result.attributes.PlaceName);
+
+          const description = pub ? pub.description : "Description not available";
+
+          obj.view.graphics.add(
+            new Graphic({
+              attributes: result.attributes,
+              geometry: result.location,
+              symbol: markerSymbol,
+              popupTemplate: {
+                title: result.attributes.PlaceName,
+                content: `${description}<br><br>${result.location.x.toFixed(5)}, ${result.location.y.toFixed(5)}`,
+              },
+            })
+          );
+        });
+
+        if (results.length) {
+          const g = obj.view.graphics.getItemAt(0);
+          obj.view.openPopup({
+            features: [g],
+            location: g.geometry,
           });
-          if (results.length) {
-            const g = obj.view.graphics.getItemAt(0);
-            obj.view.openPopup({
-              features: [g],
-              location: g.geometry
-            });
-          }
+        }
       }
-      findPlaces(pubNames, this.center);
 
+      await findPlaces(this.pubsList.map(x => x.name), this.center)
 
-      // Fires pointer-move event when user clicks on "Shift"
-      // key and moves the pointer on the view.
       this.view.on('pointer-move', ["Shift"], (event) => {
         let point = this.view.toMap({ x: event.x, y: event.y });
         console.log("map moved: ", point.longitude, point.latitude);
@@ -185,7 +185,7 @@ export class ContentComponent implements OnInit, OnDestroy {
       const searchWidget = new Search({
         view: this.view
       });
-      
+
       this.view.ui.add(searchWidget, {
         position: "top-left",
         index: 0
@@ -204,7 +204,6 @@ export class ContentComponent implements OnInit, OnDestroy {
 
 
   addFeatureLayers() {
-    // Trailheads feature layer (points)
 
     const popupTrailheads = {
       "title": "Trailhead",
@@ -214,12 +213,10 @@ export class ContentComponent implements OnInit, OnDestroy {
     var trailheadsLayer: esri.FeatureLayer = new FeatureLayer({
       url:
         "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Trailheads/FeatureServer/0",
-        // popupTemplate: popupTrailheads
     });
 
     this.map.add(trailheadsLayer);
 
-    // Trails feature layer (lines)
     const popupTrails = {
       title: "Trail Information",
       content: [{
@@ -240,12 +237,10 @@ export class ContentComponent implements OnInit, OnDestroy {
       url:
         "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Trails/FeatureServer/0",
     opacity: 0.75,
-    // popupTemplate: popupTrails
     });
 
     this.map.add(trailsLayer, 0);
 
-    // Parks and open spaces (polygons)
     var parksLayer: esri.FeatureLayer = new FeatureLayer({
       url:
         "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Parks_and_Open_Space/FeatureServer/0"
@@ -273,7 +268,7 @@ export class ContentComponent implements OnInit, OnDestroy {
         width: 1
       }
     };
-    
+
     this.pointGraphic = new Graphic({
       geometry: point,
       symbol: simpleMarkerSymbol
@@ -334,7 +329,6 @@ export class ContentComponent implements OnInit, OnDestroy {
           this.view.graphics.add(result.route);
         }
 
-        // Display directions
         if (data.routeResults.length > 0) {
           const directions: any = document.createElement("ol");
           directions.classList = "esri-widget esri-widget--panel esri-directions__scroller";
@@ -343,7 +337,6 @@ export class ContentComponent implements OnInit, OnDestroy {
           const features = data.routeResults[0].directions.features;
 
           let sum = 0;
-          // Show each direction
           features.forEach((result: any, i: any) => {
             sum += parseFloat(result.attributes.length);
             const direction = document.createElement("li");
@@ -364,8 +357,6 @@ export class ContentComponent implements OnInit, OnDestroy {
 
   runTimer() {
     this.timeoutHandler = setTimeout(() => {
-      // code to execute continuously until the view is closed
-      // ...
       this.animatePointDemo();
       this.runTimer();
     }, 200);
@@ -408,24 +399,29 @@ export class ContentComponent implements OnInit, OnDestroy {
 
   }
 
-  ngOnInit() {
-    // Initialize MapView and return an instance of MapView
+  async ngOnInit() {
+    await this.fetchPubs();
     this.initializeMap().then(() => {
-      // The map has been initialized
       console.log("mapView ready: ", this.view.ready);
       this.loaded = this.view.ready;
       this.mapLoadedEvent.emit(true);
-   //   this.runTimer();
+    });
+  }
+
+  private async fetchPubs(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.pubsService.fetchPubs().subscribe(
+        data => {
+          this.pubsList = data;
+          resolve();
+        }
+      );
     });
   }
 
   ngOnDestroy() {
     if (this.view) {
-      // destroy the map view
       this.view.container = null;
     }
-   // this.stopTimer();
   }
-
-  
 }

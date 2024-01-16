@@ -73,9 +73,6 @@ testem.log
 .DS_Store
 Thumbs.db
 
-package.json
-package-lock.json
-
 app/pubs-map-fe/node_modules/
 app/pubs-map-fe/.vscode/
 app/pubs-map-fe/.angular/
