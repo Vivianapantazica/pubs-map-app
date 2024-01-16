@@ -68,9 +68,80 @@ export class ContentComponent implements OnInit, OnDestroy {
   dir: number = 0;
   count: number = 0;
   timeoutHandler = null;
+  locationIndex: number = 0;
 
   constructor(private pubsService: PubsService) { }
 
+  async findPlaces(addresses: string[], pt) {
+    const geocodingServiceUrl = "http://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer";
+
+    const geocodePromises = addresses.map((address) => {
+      const params = {
+        address: {
+          address: address,
+        },
+        location: pt,
+        outFields: ["PlaceName","Place_addr"]
+      };
+
+    return Locator.addressToLocations(geocodingServiceUrl, params);
+    });
+
+    try {
+      const resultsArray = await Promise.all(geocodePromises);
+
+      const results = resultsArray.reduce((acc, cur) => acc.concat(cur), []);
+
+      this.showResults(results);
+    } catch (error) {
+      console.error("Error in geocoding:", error);
+    }
+
+  }
+
+  showResults(results) {
+    const obj = this;
+    obj.view.popup.close();
+    obj.view.graphics.removeAll();
+
+    const markerSymbol = new SimpleMarkerSymbol({
+      color: "yellow",
+      size: "16px",
+      outline: {
+        color: "blue",
+        width: "4px",
+      },
+    });
+
+    const highlightedMarkerSymbol = new SimpleMarkerSymbol({
+      color: "pink",
+      size: "20px",
+      outline: {
+        color: "black",
+        width: "4px",
+      },
+    });
+
+    results.forEach((result) => {
+      const pub = obj.pubsList.find((pub) => pub.name === result.attributes.PlaceName);
+      const isHighlightedPub = obj.pubsList.indexOf(pub) === obj.locationIndex;
+
+      const description = pub ? pub.description : "Description not available";
+
+      obj.view.graphics.add(
+        new Graphic({
+          attributes: result.attributes,
+          geometry: result.location,
+          symbol: isHighlightedPub ? highlightedMarkerSymbol : markerSymbol,
+          popupTemplate: {
+            title: result.attributes.PlaceName,
+            content: `${description}<br><br>${result.location.x.toFixed(5)}, ${result.location.y.toFixed(5)}`,
+          },
+        })
+      );
+    });
+  }
+  
   async initializeMap() {
     try {
 
@@ -108,74 +179,8 @@ export class ContentComponent implements OnInit, OnDestroy {
       this.view.ui.add(this.locate, "top-left");
 
       let obj = this;
-      async function findPlaces(addresses: string[], pt) {
-        const geocodingServiceUrl = "http://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer";
 
-        const geocodePromises = addresses.map((address) => {
-          const params = {
-            address: {
-              address: address,
-            },
-            location: pt,
-            outFields: ["PlaceName","Place_addr"]
-          };
-
-        return Locator.addressToLocations(geocodingServiceUrl, params);
-        });
-
-        try {
-          const resultsArray = await Promise.all(geocodePromises);
-
-          const results = resultsArray.reduce((acc, cur) => acc.concat(cur), []);
-
-          showResults(results);
-        } catch (error) {
-          console.error("Error in geocoding:", error);
-        }
-
-      }
-
-      function showResults(results) {
-        obj.view.popup.close();
-        obj.view.graphics.removeAll();
-
-        const markerSymbol = new SimpleMarkerSymbol({
-          color: "yellow",
-          size: "16px",
-          outline: {
-            color: "blue",
-            width: "4px",
-          },
-        });
-
-        results.forEach((result) => {
-          const pub = obj.pubsList.find((pub) => pub.name === result.attributes.PlaceName);
-
-          const description = pub ? pub.description : "Description not available";
-
-          obj.view.graphics.add(
-            new Graphic({
-              attributes: result.attributes,
-              geometry: result.location,
-              symbol: markerSymbol,
-              popupTemplate: {
-                title: result.attributes.PlaceName,
-                content: `${description}<br><br>${result.location.x.toFixed(5)}, ${result.location.y.toFixed(5)}`,
-              },
-            })
-          );
-        });
-
-        if (results.length) {
-          const g = obj.view.graphics.getItemAt(0);
-          obj.view.openPopup({
-            features: [g],
-            location: g.geometry,
-          });
-        }
-      }
-
-      await findPlaces(this.pubsList.map(x => x.name), this.center)
+      await this.findPlaces(this.pubsList.map(x => x.name), this.center)
 
       this.view.on('pointer-move', ["Shift"], (event) => {
         let point = this.view.toMap({ x: event.x, y: event.y });
@@ -193,7 +198,6 @@ export class ContentComponent implements OnInit, OnDestroy {
 
       await this.view.when(); // wait for map to load
       console.log("ArcGIS map loaded");
-    //  this.addRouter();
       console.log(this.view.center);
       return this.view;
     } catch (error) {
@@ -406,16 +410,25 @@ export class ContentComponent implements OnInit, OnDestroy {
       this.loaded = this.view.ready;
       this.mapLoadedEvent.emit(true);
     });
+
+    // handle animation start
+    setInterval(async () => {
+      this.locationIndex = Math.floor(Math.random() * this.pubsList.length);
+      await this.findPlaces(this.pubsList.map(x => x.name), this.center);
+    }, 500);
   }
 
   private async fetchPubs(): Promise<void> {
     return new Promise<void>((resolve) => {
-      this.pubsService.fetchPubs().subscribe(
-        data => {
-          this.pubsList = data;
-          resolve();
-        }
-      );
+      // this.pubsService.fetchPubs().subscribe(
+      //   data => {
+      //     this.pubsList = data;
+      //     console.log("lista pubs", this.pubsList);
+      //     resolve();
+      //   }
+      // );
+      this.pubsList = pubNames.map(pub => new Pub(pub, "adresa", "descriere"));
+      resolve();
     });
   }
 
